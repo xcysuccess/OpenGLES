@@ -1,7 +1,8 @@
 ### 1. OpenGLESFirstApp
 将learnopengl-cn的着色器（包括着色器）之前的部分转换为iOS版
 
-
+### 2. OpenGLESTexture
+将learnopengl=cn的纹理的部分转换为iOS版代码
 
 ### Final. 参考目录
 
