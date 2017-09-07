@@ -14,17 +14,15 @@
 #include "JpegUtil.h"
 
 GLfloat vertices[] = {
-    //     ---- 位置 ----       ---- 颜色 ----    - 纹理坐标 -
-    0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
-    0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
-    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
-    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
+    //     ---- 位置 ---- - 纹理坐标 -
+    0.5f,  0.5f,  0.0f,    1.0f, 0.0f,   // 右上
+    0.5f,  -0.5f, 0.0f,    1.0f, 1.0f,   // 右下
+    -0.5f, -0.5f, 0.0f,    0.0f, 1.0f,   // 左下
+    -0.5f, -0.5f, 0.0f,    0.0f, 1.0f,   // 左下
+    -0.5f, 0.5f, 0.0f,     0.0f, 0.0f,   // 左上
+    0.5f,  0.5f, 0.0f,     1.0f, 0.0f    // 左上
 };
 
-unsigned int indices[] = {
-    0, 1, 3, // first triangle
-    1, 2, 3  // second triangle
-};
 @interface XXOpenGLView()
 {
     CAEAGLLayer *_eaglLayer;    //提供了一个OpenGLES渲染环境
@@ -37,7 +35,7 @@ unsigned int indices[] = {
     GLuint _inputColorSlot;
     GLuint _texCoordSlot;
     
-    GLuint _VAO;
+    GLuint _VBO;
     GLuint _texture;
 
     
@@ -68,8 +66,6 @@ unsigned int indices[] = {
     
     glDeleteTextures(1, &_texture);
     glDeleteProgram(_programHandle);
-    
-    glDeleteVertexArraysOES(1, &_VAO);
 }
 
 - (void)layoutSubviews {
@@ -135,31 +131,21 @@ unsigned int indices[] = {
 }
 
 - (void)setupVAOVBOEBO {
-    GLuint VBO,EBO;
-    glGenVertexArraysOES(1, &_VAO);
+    GLuint VBO;
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-    //1. 绑定VAO
-    glBindVertexArrayOES(_VAO);
-    //2. 把顶点数组复制到缓冲中供OpenGL使用
+
+    //1. 把顶点数组复制到缓冲中供OpenGL使用
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    
-    //3. 设置顶点属性指针
-    glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    //2. 设置顶点属性指针
     glEnableVertexAttribArray(_positionSlot);
-    
-    glVertexAttribPointer(_inputColorSlot, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3* sizeof(float)));
-    glEnableVertexAttribArray(_inputColorSlot);
-    
-    glVertexAttribPointer(_texCoordSlot, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6* sizeof(float)));
+    glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+
     glEnableVertexAttribArray(_texCoordSlot);
-    
-    glBindVertexArrayOES(0);
+    glVertexAttribPointer(_texCoordSlot, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3* sizeof(float)));
 }
+
 - (void)setupTexture {
     NSString *path = [[NSBundle mainBundle] pathForResource:@"wood" ofType:@"jpg"];
     
@@ -186,7 +172,8 @@ unsigned int indices[] = {
     //第三个参数告诉OpenGL我们希望把纹理储存为何种格式
     //第七第八个参数定义了源图的格式和数据类型
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+//    glGenerateMipmap(GL_TEXTURE_2D);
     
     
     if (data) {
@@ -224,12 +211,11 @@ unsigned int indices[] = {
     glBindTexture(GL_TEXTURE_2D, _texture);
 
     glUseProgram(_programHandle);
-    glBindVertexArrayOES(_VAO);
     glUniform1i(glGetUniformLocation(_programHandle, "ourTexture"), 0);
 
     // Draw triangle
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
     [_context presentRenderbuffer:GL_RENDERBUFFER];
     
 }
